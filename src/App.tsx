@@ -1,9 +1,26 @@
-import { ArrowRight, ChevronDown, CircleCheck, CircleDashed, FastForward, Layers, LoaderCircle, OctagonX, Play, RotateCcw, TriangleAlert } from 'lucide-react';
+import {
+  ArrowRight,
+  ChevronDown,
+  CircleCheck,
+  CircleDashed,
+  Download,
+  FastForward,
+  Globe,
+  Layers,
+  LoaderCircle,
+  Maximize2,
+  Minimize2,
+  OctagonX,
+  Play,
+  RotateCcw,
+  TriangleAlert,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConfigTab } from './components/ConfigTab';
 import { DiagnosisTab } from './components/DiagnosisTab';
 import { NegotiationTab } from './components/NegotiationTab';
 import { ParametersTab } from './components/ParametersTab';
+import { ShareSubpageModal } from './components/ShareSubpageModal';
 import { SitePanel } from './components/SitePanel';
 import { Topology } from './components/Topology';
 import { TrafficTab } from './components/TrafficTab';
@@ -11,6 +28,7 @@ import { PrimaryButton, Segmented } from './components/ui';
 import { SCENARIOS, baseSites } from './lib/scenarios';
 import { simulate, type Fix, type SaState, type Severity } from './lib/simulate';
 import type { Site, SiteKey, Sites } from './lib/types';
+import { parseUrlState, updateBrowserUrl } from './lib/urlState';
 import { VENDORS, coerce } from './lib/vendors';
 import { cn } from './utils/cn';
 
@@ -67,7 +85,44 @@ const quietButton =
   'inline-flex h-11 items-center justify-center gap-2 rounded-md border border-line bg-panel px-3 text-[13px] font-medium text-fg/90 transition-colors hover:border-line-strong hover:bg-raised active:translate-y-px md:h-9';
 
 export default function App() {
-  const [initial] = useState<Persisted>(() => load() ?? { ...SCENARIOS[0].build(), scenarioId: 'baseline' });
+  const urlState = useMemo(() => parseUrlState(), []);
+
+  const [initial] = useState<Persisted>(() => {
+    if (urlState.customState) {
+      return {
+        sites: urlState.customState.sites,
+        initiator: urlState.customState.initiator,
+        scenarioId: 'baseline',
+      };
+    }
+    if (urlState.scenarioId) {
+      const sc = SCENARIOS.find((s) => s.id === urlState.scenarioId);
+      if (sc) {
+        const built = sc.build();
+        let s = built.sites;
+        if (urlState.vendorA) s = { ...s, A: coerce({ ...s.A, vendor: urlState.vendorA }) };
+        if (urlState.vendorB) s = { ...s, B: coerce({ ...s.B, vendor: urlState.vendorB }) };
+        return {
+          sites: s,
+          initiator: urlState.initiator ?? built.initiator,
+          scenarioId: sc.id,
+        };
+      }
+    }
+    const saved = load();
+    if (saved) {
+      let s = saved.sites;
+      if (urlState.vendorA) s = { ...s, A: coerce({ ...s.A, vendor: urlState.vendorA }) };
+      if (urlState.vendorB) s = { ...s, B: coerce({ ...s.B, vendor: urlState.vendorB }) };
+      return {
+        ...saved,
+        sites: s,
+        initiator: urlState.initiator ?? saved.initiator,
+      };
+    }
+    return { ...SCENARIOS[0].build(), scenarioId: 'baseline' };
+  });
+
   const [sites, setSites] = useState<Sites>(initial.sites);
   const [initiator, setInitiator] = useState<SiteKey>(initial.initiator);
   const [scenarioId, setScenarioId] = useState(initial.scenarioId);
@@ -76,11 +131,14 @@ export default function App() {
   const [playhead, setPlayhead] = useState(0);
   const [runId, setRunId] = useState(0);
   const [everRan, setEverRan] = useState(false);
-  const [tab, setTab] = useState<TabId>('negotiation');
+  const [tab, setTab] = useState<TabId>(() => urlState.tab ?? 'negotiation');
   const [mobileSite, setMobileSite] = useState<SiteKey>('A');
+  const [embedMode, setEmbedMode] = useState<boolean>(() => !!urlState.embed);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const sim = useMemo(() => simulate(sites.A, sites.B, initiator), [sites, initiator]);
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE, JSON.stringify({ sites, initiator, scenarioId } satisfies Persisted));
@@ -88,6 +146,23 @@ export default function App() {
       /* storage unavailable — the app works without it */
     }
   }, [sites, initiator, scenarioId]);
+
+  // Synchronize URL in browser address bar (enables bookmarking & sharing exact subpage state)
+  useEffect(() => {
+    updateBrowserUrl({
+      scenarioId,
+      tab,
+      initiator,
+      embed: embedMode,
+    });
+  }, [scenarioId, tab, initiator, embedMode]);
+
+  // Auto-run if requested via URL query (?autorun=1 or ?run=true)
+  useEffect(() => {
+    if (urlState.autorun) {
+      start();
+    }
+  }, [urlState.autorun]);
 
   /* ---- run control ---- */
   const stop = useCallback(() => {
@@ -215,28 +290,19 @@ export default function App() {
 
   return (
     <div className="min-h-dvh">
-      <header className="border-b border-line bg-panel/85">
-        <div className="mx-auto flex max-w-[1680px] flex-wrap items-center gap-x-6 gap-y-3 px-3 py-3 sm:px-5">
-          <div className="flex min-w-0 items-center gap-3">
-            <Logo />
-            <div className="min-w-0">
-              <h1 className="text-[16px] font-semibold leading-tight tracking-[-0.01em]">IPSEC VPN Simulator</h1>
-              <p className="text-[12.5px] leading-tight text-mute">Site-to-site VPN simulator and troubleshooter</p>
-            </div>
-          </div>
-
-          <div className="flex w-full flex-wrap items-center gap-2.5 sm:gap-3 lg:ml-auto lg:w-auto">
-            <div className="flex w-full items-center gap-2 sm:w-auto">
-              <span className="flex shrink-0 items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-mute">
-                <Layers className="h-3.5 w-3.5 text-a" aria-hidden />
-                <span>Lab Scenarios:</span>
+      {embedMode ? (
+        <header className="border-b border-line bg-panel/90 px-3 py-1.5 sm:px-4">
+          <div className="mx-auto flex max-w-[1680px] flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 rounded bg-a/15 px-2 py-0.5 font-mono text-[11px] font-semibold text-a">
+                IPSEC Simulator
               </span>
-              <label className="relative block flex-1 sm:w-[310px]">
-                <span className="sr-only">Lab Scenarios</span>
+              <label className="relative block w-[190px] sm:w-[260px]">
+                <span className="sr-only">Lab Scenario</span>
                 <select
                   value={scenarioId}
                   onChange={(e) => loadScenario(e.target.value)}
-                  className="h-11 w-full cursor-pointer appearance-none truncate rounded-md border border-line bg-well pl-3 pr-9 text-base text-fg transition-colors hover:border-line-strong md:h-9 md:text-[13px]"
+                  className="h-8 w-full cursor-pointer appearance-none truncate rounded border border-line bg-well pl-2 pr-7 font-mono text-[11.5px] text-fg hover:border-line-strong"
                 >
                   {groups.map((g) => (
                     <optgroup key={g} label={g}>
@@ -248,15 +314,100 @@ export default function App() {
                     </optgroup>
                   ))}
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" aria-hidden />
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-mute" aria-hidden />
               </label>
             </div>
-            <button type="button" onClick={() => loadScenario(scenarioId)} className={cn(quietButton, 'flex-1 sm:flex-none')}>
-              <RotateCcw className="h-4 w-4 text-mute" aria-hidden /> Reset Lab
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setIsShareModalOpen(true)}
+                className="inline-flex h-8 items-center gap-1 rounded border border-line bg-panel px-2 font-mono text-[11px] text-mute hover:border-line-strong hover:text-fg"
+                title="Get URL or Embed Code"
+              >
+                <Globe className="h-3.5 w-3.5 text-a" />
+                <span className="hidden sm:inline">Subpage / URL</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmbedMode(false)}
+                className="inline-flex h-8 items-center gap-1 rounded border border-line bg-panel px-2 font-mono text-[11px] text-mute hover:border-line-strong hover:text-fg"
+                title="Exit Embed Mode"
+              >
+                <Maximize2 className="h-3.5 w-3.5 text-mute" />
+                <span className="hidden sm:inline">Full View</span>
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      ) : (
+        <header className="border-b border-line bg-panel/85">
+          <div className="mx-auto flex max-w-[1680px] flex-wrap items-center gap-x-6 gap-y-3 px-3 py-3 sm:px-5">
+            <div className="flex min-w-0 items-center gap-3">
+              <Logo />
+              <div className="min-w-0">
+                <h1 className="text-[16px] font-semibold leading-tight tracking-[-0.01em]">IPSEC VPN Simulator</h1>
+                <p className="text-[12.5px] leading-tight text-mute">Site-to-site VPN simulator and troubleshooter</p>
+              </div>
+            </div>
+
+            <div className="flex w-full flex-wrap items-center gap-2.5 sm:gap-3 lg:ml-auto lg:w-auto">
+              <div className="flex w-full items-center gap-2 sm:w-auto">
+                <span className="flex shrink-0 items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-mute">
+                  <Layers className="h-3.5 w-3.5 text-a" aria-hidden />
+                  <span>Lab Scenarios:</span>
+                </span>
+                <label className="relative block flex-1 sm:w-[310px]">
+                  <span className="sr-only">Lab Scenarios</span>
+                  <select
+                    value={scenarioId}
+                    onChange={(e) => loadScenario(e.target.value)}
+                    className="h-11 w-full cursor-pointer appearance-none truncate rounded-md border border-line bg-well pl-3 pr-9 text-base text-fg transition-colors hover:border-line-strong md:h-9 md:text-[13px]"
+                  >
+                    {groups.map((g) => (
+                      <optgroup key={g} label={g}>
+                        {SCENARIOS.filter((s) => s.group === g).map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.title}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" aria-hidden />
+                </label>
+              </div>
+              <button type="button" onClick={() => loadScenario(scenarioId)} className={cn(quietButton, 'flex-1 sm:flex-none')}>
+                <RotateCcw className="h-4 w-4 text-mute" aria-hidden /> Reset Lab
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsShareModalOpen(true)}
+                className={cn(quietButton, 'flex-1 sm:flex-none border-a/40 text-a hover:border-a hover:bg-a/10')}
+                title="Open as Subpage on your Website or Get Embed URL"
+              >
+                <Globe className="h-4 w-4 text-a" aria-hidden /> Subpage / URL
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmbedMode((e) => !e)}
+                className={cn(quietButton, 'flex-1 sm:flex-none', embedMode ? 'border-ok/40 text-ok' : 'text-mute')}
+                title={embedMode ? 'Exit Embed Mode' : 'Toggle Embed View (for iframes & subpages)'}
+              >
+                {embedMode ? <Minimize2 className="h-4 w-4 text-ok" /> : <Maximize2 className="h-4 w-4 text-mute" />}
+                <span className="hidden xl:inline">{embedMode ? 'Exit Embed' : 'Embed View'}</span>
+              </button>
+              <a
+                href="ipsec-vpn-simulator.zip"
+                download="ipsec-vpn-simulator.zip"
+                className={cn(quietButton, 'flex-1 sm:flex-none')}
+                title="Download Option B Project Source Code (.zip)"
+              >
+                <Download className="h-4 w-4 text-mute" aria-hidden /> Download Zip
+              </a>
+            </div>
+          </div>
+        </header>
+      )}
 
       <main className="mx-auto max-w-[1680px] px-3 pb-10 pt-4 sm:px-5">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[336px_minmax(0,1fr)_336px] xl:grid-rows-[auto_1fr]">
@@ -391,10 +542,23 @@ export default function App() {
           </section>
         </div>
 
-        <footer className="mt-8 max-w-[90ch] text-[12px] leading-relaxed text-mute">
-          IPSEC VPN Simulator models IKEv1 and IKEv2 with pre-shared keys, NAT traversal, selector matching and the post-tunnel data path. It runs entirely in your browser; nothing you enter is sent anywhere. Treat generated configuration as a starting point and validate it against your platform's documentation.
-        </footer>
+        {!embedMode && (
+          <footer className="mt-8 max-w-[90ch] text-[12px] leading-relaxed text-mute">
+            IPSEC VPN Simulator models IKEv1 and IKEv2 with pre-shared keys, NAT traversal, selector matching and the post-tunnel data path. It runs entirely in your browser; nothing you enter is sent anywhere. Treat generated configuration as a starting point and validate it against your platform's documentation.
+          </footer>
+        )}
       </main>
+
+      <ShareSubpageModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        scenarioId={scenarioId}
+        tab={tab}
+        initiator={initiator}
+        sites={sites}
+        embedMode={embedMode}
+        onToggleEmbed={(em) => setEmbedMode(em)}
+      />
     </div>
   );
 }
