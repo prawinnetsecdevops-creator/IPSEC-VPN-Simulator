@@ -3,12 +3,10 @@ import {
   ChevronDown,
   CircleCheck,
   CircleDashed,
-  Download,
   FastForward,
   Layers,
   LoaderCircle,
   Maximize2,
-  Minimize2,
   OctagonX,
   Play,
   RotateCcw,
@@ -367,23 +365,6 @@ export default function App() {
               <button type="button" onClick={() => loadScenario(scenarioId)} className={cn(quietButton, 'flex-1 sm:flex-none')}>
                 <RotateCcw className="h-4 w-4 text-mute" aria-hidden /> Reset Lab
               </button>
-              <button
-                type="button"
-                onClick={() => setEmbedMode((e) => !e)}
-                className={cn(quietButton, 'flex-1 sm:flex-none', embedMode ? 'border-ok/40 text-ok' : 'text-mute')}
-                title={embedMode ? 'Exit Embed Mode' : 'Toggle Embed View (for iframes & subpages)'}
-              >
-                {embedMode ? <Minimize2 className="h-4 w-4 text-ok" /> : <Maximize2 className="h-4 w-4 text-mute" />}
-                <span className="hidden xl:inline">{embedMode ? 'Exit Embed' : 'Embed View'}</span>
-              </button>
-              <a
-                href="ipsec-vpn-simulator.zip"
-                download="ipsec-vpn-simulator.zip"
-                className={cn(quietButton, 'flex-1 sm:flex-none')}
-                title="Download Option B Project Source Code (.zip)"
-              >
-                <Download className="h-4 w-4 text-mute" aria-hidden /> Download Zip
-              </a>
             </div>
           </div>
         </header>
