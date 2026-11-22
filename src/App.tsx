@@ -4,6 +4,7 @@ import {
   CircleCheck,
   CircleDashed,
   FastForward,
+  House,
   Layers,
   LoaderCircle,
   Maximize2,
@@ -362,6 +363,9 @@ export default function App() {
                   <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" aria-hidden />
                 </label>
               </div>
+              <a href="https://i4secure.com/" className={cn(quietButton, 'flex-1 sm:flex-none')}>
+                <House className="h-4 w-4 text-mute" aria-hidden /> Home
+              </a>
               <button type="button" onClick={() => loadScenario(scenarioId)} className={cn(quietButton, 'flex-1 sm:flex-none')}>
                 <RotateCcw className="h-4 w-4 text-mute" aria-hidden /> Reset Lab
               </button>
