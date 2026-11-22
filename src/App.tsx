@@ -3,13 +3,10 @@ import {
   ChevronDown,
   CircleCheck,
   CircleDashed,
-  Download,
   FastForward,
-  Globe,
   Layers,
   LoaderCircle,
   Maximize2,
-  Minimize2,
   OctagonX,
   Play,
   RotateCcw,
@@ -20,7 +17,6 @@ import { ConfigTab } from './components/ConfigTab';
 import { DiagnosisTab } from './components/DiagnosisTab';
 import { NegotiationTab } from './components/NegotiationTab';
 import { ParametersTab } from './components/ParametersTab';
-import { ShareSubpageModal } from './components/ShareSubpageModal';
 import { SitePanel } from './components/SitePanel';
 import { Topology } from './components/Topology';
 import { TrafficTab } from './components/TrafficTab';
@@ -134,7 +130,6 @@ export default function App() {
   const [tab, setTab] = useState<TabId>(() => urlState.tab ?? 'negotiation');
   const [mobileSite, setMobileSite] = useState<SiteKey>('A');
   const [embedMode, setEmbedMode] = useState<boolean>(() => !!urlState.embed);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const sim = useMemo(() => simulate(sites.A, sites.B, initiator), [sites, initiator]);
@@ -320,15 +315,6 @@ export default function App() {
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => setIsShareModalOpen(true)}
-                className="inline-flex h-8 items-center gap-1 rounded border border-line bg-panel px-2 font-mono text-[11px] text-mute hover:border-line-strong hover:text-fg"
-                title="Get URL or Embed Code"
-              >
-                <Globe className="h-3.5 w-3.5 text-a" />
-                <span className="hidden sm:inline">Subpage / URL</span>
-              </button>
-              <button
-                type="button"
                 onClick={() => setEmbedMode(false)}
                 className="inline-flex h-8 items-center gap-1 rounded border border-line bg-panel px-2 font-mono text-[11px] text-mute hover:border-line-strong hover:text-fg"
                 title="Exit Embed Mode"
@@ -379,31 +365,6 @@ export default function App() {
               <button type="button" onClick={() => loadScenario(scenarioId)} className={cn(quietButton, 'flex-1 sm:flex-none')}>
                 <RotateCcw className="h-4 w-4 text-mute" aria-hidden /> Reset Lab
               </button>
-              <button
-                type="button"
-                onClick={() => setIsShareModalOpen(true)}
-                className={cn(quietButton, 'flex-1 sm:flex-none border-a/40 text-a hover:border-a hover:bg-a/10')}
-                title="Open as Subpage on your Website or Get Embed URL"
-              >
-                <Globe className="h-4 w-4 text-a" aria-hidden /> Subpage / URL
-              </button>
-              <button
-                type="button"
-                onClick={() => setEmbedMode((e) => !e)}
-                className={cn(quietButton, 'flex-1 sm:flex-none', embedMode ? 'border-ok/40 text-ok' : 'text-mute')}
-                title={embedMode ? 'Exit Embed Mode' : 'Toggle Embed View (for iframes & subpages)'}
-              >
-                {embedMode ? <Minimize2 className="h-4 w-4 text-ok" /> : <Maximize2 className="h-4 w-4 text-mute" />}
-                <span className="hidden xl:inline">{embedMode ? 'Exit Embed' : 'Embed View'}</span>
-              </button>
-              <a
-                href="ipsec-vpn-simulator.zip"
-                download="ipsec-vpn-simulator.zip"
-                className={cn(quietButton, 'flex-1 sm:flex-none')}
-                title="Download Option B Project Source Code (.zip)"
-              >
-                <Download className="h-4 w-4 text-mute" aria-hidden /> Download Zip
-              </a>
             </div>
           </div>
         </header>
@@ -548,17 +509,6 @@ export default function App() {
           </footer>
         )}
       </main>
-
-      <ShareSubpageModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        scenarioId={scenarioId}
-        tab={tab}
-        initiator={initiator}
-        sites={sites}
-        embedMode={embedMode}
-        onToggleEmbed={(em) => setEmbedMode(em)}
-      />
     </div>
   );
 }
