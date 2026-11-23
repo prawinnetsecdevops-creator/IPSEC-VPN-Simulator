@@ -332,7 +332,12 @@ export default function App() {
             <div className="flex min-w-0 items-center gap-3">
               <Logo />
               <div className="min-w-0">
-                <h1 className="text-[16px] font-semibold leading-tight tracking-[-0.01em]">IPSEC VPN Simulator</h1>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-[16px] font-semibold leading-tight tracking-[-0.01em]">IPSEC VPN Simulator</h1>
+                  <a href="https://i4secure.com/" className={cn(quietButton, 'shrink-0')}>
+                    <House className="h-4 w-4 text-mute" aria-hidden /> Home
+                  </a>
+                </div>
                 <p className="text-[12.5px] leading-tight text-mute">Site-to-site VPN simulator and troubleshooter</p>
               </div>
             </div>
@@ -363,9 +368,6 @@ export default function App() {
                   <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" aria-hidden />
                 </label>
               </div>
-              <a href="https://i4secure.com/" className={cn(quietButton, 'flex-1 sm:flex-none')}>
-                <House className="h-4 w-4 text-mute" aria-hidden /> Home
-              </a>
               <button type="button" onClick={() => loadScenario(scenarioId)} className={cn(quietButton, 'flex-1 sm:flex-none')}>
                 <RotateCcw className="h-4 w-4 text-mute" aria-hidden /> Reset Lab
               </button>
