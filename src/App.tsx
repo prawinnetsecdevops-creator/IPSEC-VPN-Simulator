@@ -4,6 +4,7 @@ import {
   CircleCheck,
   CircleDashed,
   FastForward,
+  House,
   Layers,
   LoaderCircle,
   Maximize2,
@@ -331,7 +332,12 @@ export default function App() {
             <div className="flex min-w-0 items-center gap-3">
               <Logo />
               <div className="min-w-0">
-                <h1 className="text-[16px] font-semibold leading-tight tracking-[-0.01em]">IPSEC VPN Simulator</h1>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-[16px] font-semibold leading-tight tracking-[-0.01em]">IPSEC VPN Simulator</h1>
+                  <a href="https://i4secure.com/" className={cn(quietButton, 'shrink-0')}>
+                    <House className="h-4 w-4 text-mute" aria-hidden /> Home
+                  </a>
+                </div>
                 <p className="text-[12.5px] leading-tight text-mute">Site-to-site VPN simulator and troubleshooter</p>
               </div>
             </div>
