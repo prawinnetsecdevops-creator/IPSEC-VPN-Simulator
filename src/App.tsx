@@ -332,15 +332,13 @@ export default function App() {
             <div className="flex min-w-0 items-center gap-3">
               <Logo />
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-[16px] font-semibold leading-tight tracking-[-0.01em]">IPSEC VPN Simulator</h1>
-                  <a href="https://i4secure.com/" className={cn(quietButton, 'shrink-0')}>
-                    <House className="h-4 w-4 text-mute" aria-hidden /> Home
-                  </a>
-                </div>
+                <h1 className="text-[16px] font-semibold leading-tight tracking-[-0.01em]">IPSEC VPN Simulator</h1>
                 <p className="text-[12.5px] leading-tight text-mute">Site-to-site VPN simulator and troubleshooter</p>
               </div>
             </div>
+            <a href="https://i4secure.com/" className={cn(quietButton, 'shrink-0 sm:ml-3')}>
+              <House className="h-4 w-4 text-mute" aria-hidden /> Home
+            </a>
 
             <div className="flex w-full flex-wrap items-center gap-2.5 sm:gap-3 lg:ml-auto lg:w-auto">
               <div className="flex w-full items-center gap-2 sm:w-auto">
